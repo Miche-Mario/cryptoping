@@ -1,119 +1,155 @@
-import React, { useState, useEffect } from 'react'
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, addDoc, getDocs, where, limit, runTransaction } from 'firebase/firestore'
-import { db } from '../../firebase'
-import { toast } from 'react-toastify'
-import { useAuth } from '../../contexts/AuthContext'
-import { Navigate } from 'react-router-dom'
+import React, { useState, useEffect } from "react";
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  doc,
+  updateDoc,
+  addDoc,
+  getDocs,
+  where,
+  limit,
+  runTransaction,
+  getDoc,
+} from "firebase/firestore";
+import { db } from "../../firebase";
+import { toast } from "react-toastify";
+import { useAuth } from "../../contexts/AuthContext";
+import { Navigate } from "react-router-dom";
 
 interface BuyRequest {
-  id: string
-  userId: string
-  cryptocurrency: string
-  amount: number
-  date: Date
-  status: 'pending' | 'approved' | 'rejected'
+  id: string;
+  userId: string;
+  fullName: string; // Add this line
+  cryptocurrency: string;
+  amount: number;
+  date: Date;
+  status: "pending" | "approved" | "rejected";
+}
+
+interface UserData {
+  fullName?: string;
+  // Add other user properties here if needed
 }
 
 const BuyRequests: React.FC = () => {
-  const [buyRequests, setBuyRequests] = useState<BuyRequest[]>([])
-  const [loading, setLoading] = useState(true)
-  const { user, isAdmin } = useAuth()
+  const [buyRequests, setBuyRequests] = useState<BuyRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user, isAdmin } = useAuth();
 
   useEffect(() => {
     if (!user || !isAdmin()) {
-      setLoading(false)
-      return
+      setLoading(false);
+      return;
     }
 
-    const buyRequestsRef = collection(db, 'buyRequests')
-    const q = query(buyRequestsRef, orderBy('date', 'desc'))
+    const buyRequestsRef = collection(db, "buyRequests");
+    const q = query(buyRequestsRef, orderBy("date", "desc"));
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const requests = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        date: doc.data().date.toDate()
-      } as BuyRequest))
-      setBuyRequests(requests)
-      setLoading(false)
-    }, (error) => {
-      console.error("Error fetching buy requests: ", error)
-      toast.error("Error fetching buy requests. Please try again.")
-      setLoading(false)
-    })
+    const unsubscribe = onSnapshot(
+      q,
+      async (querySnapshot) => {
+        const requests = await Promise.all(
+          querySnapshot.docs.map(async (document) => {
+            const data = document.data();
+            const userDocRef = doc(db, "users", data.userId);
+            const userDoc = await getDoc(userDocRef);
+            const userData = userDoc.data() as UserData | undefined;
 
-    return () => unsubscribe()
-  }, [user, isAdmin])
+            return {
+              id: document.id,
+              ...data,
+              fullName: userData?.fullName || "Unknown",
+              date: data.date.toDate(),
+            } as BuyRequest;
+          })
+        );
+        setBuyRequests(requests);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching buy requests: ", error);
+        toast.error("Error fetching buy requests. Please try again.");
+        setLoading(false);
+      }
+    );
 
-  const handleStatusChange = async (requestId: string, newStatus: 'approved' | 'rejected') => {
+    return () => unsubscribe();
+  }, [user, isAdmin]);
+
+  const handleStatusChange = async (
+    requestId: string,
+    newStatus: "approved" | "rejected"
+  ) => {
     try {
-      const requestRef = doc(db, 'buyRequests', requestId)
-      await updateDoc(requestRef, { status: newStatus })
+      const requestRef = doc(db, "buyRequests", requestId);
+      await updateDoc(requestRef, { status: newStatus });
 
-      if (newStatus === 'approved') {
-        await processApprovedBuyRequest(requestId)
+      if (newStatus === "approved") {
+        await processApprovedBuyRequest(requestId);
       }
 
-      toast.success(`Buy request ${newStatus}`)
+      toast.success(`Buy request ${newStatus}`);
     } catch (error) {
-      console.error("Error updating request status:", error)
-      toast.error("Failed to update request status. Please try again.")
+      console.error("Error updating request status:", error);
+      toast.error("Failed to update request status. Please try again.");
     }
-  }
+  };
 
   const processApprovedBuyRequest = async (requestId: string) => {
     try {
       await runTransaction(db, async (transaction) => {
-        const requestRef = doc(db, 'buyRequests', requestId)
-        const requestDoc = await transaction.get(requestRef)
-        
+        const requestRef = doc(db, "buyRequests", requestId);
+        const requestDoc = await transaction.get(requestRef);
+
         if (!requestDoc.exists()) {
-          throw new Error("Buy request does not exist!")
+          throw new Error("Buy request does not exist!");
         }
 
-        const requestData = requestDoc.data() as BuyRequest
-        const userRef = doc(db, 'users', requestData.userId)
-        const userDoc = await transaction.get(userRef)
+        const requestData = requestDoc.data() as BuyRequest;
+        const userRef = doc(db, "users", requestData.userId);
+        const userDoc = await transaction.get(userRef);
 
         if (!userDoc.exists()) {
-          throw new Error("User does not exist!")
+          throw new Error("User does not exist!");
         }
 
-        const userData = userDoc.data()
-        const currentBalance = userData.balance || 0
-        const newBalance = currentBalance - requestData.amount
+        const userData = userDoc.data();
+        const currentBalance = userData.balance || 0;
+        const newBalance = currentBalance - requestData.amount;
 
         if (newBalance < 0) {
-          throw new Error("Insufficient balance")
+          throw new Error("Insufficient balance");
         }
 
-        transaction.update(userRef, { balance: newBalance })
+        transaction.update(userRef, { balance: newBalance });
 
-        const transactionRef = await addDoc(collection(db, 'transactions'), {
+        const transactionRef = await addDoc(collection(db, "transactions"), {
           userId: requestData.userId,
-          type: 'buy',
+          type: "buy",
           amount: requestData.amount,
           cryptocurrency: requestData.cryptocurrency,
           date: new Date(),
-          status: 'complete'
-        })
+          status: "complete",
+        });
 
-        console.log("Transaction created with ID: ", transactionRef.id)
-      })
+        console.log("Transaction created with ID: ", transactionRef.id);
+      });
 
-      toast.success("Buy request processed successfully")
+      toast.success("Buy request processed successfully");
     } catch (error) {
-      console.error("Error processing approved buy request:", error)
-      toast.error("Failed to process buy request. Please try again.")
+      console.error("Error processing approved buy request:", error);
+      toast.error("Failed to process buy request. Please try again.");
     }
-  }
+  };
 
   if (loading) {
-    return <div>Loading buy requests...</div>
+    return <div>Loading buy requests...</div>;
   }
 
   if (!user || !isAdmin()) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/login" replace />;
   }
 
   return (
@@ -123,7 +159,7 @@ const BuyRequests: React.FC = () => {
         <thead>
           <tr>
             <th className="py-2 px-4 border-b">Date</th>
-            <th className="py-2 px-4 border-b">User ID</th>
+            <th className="py-2 px-4 border-b">User</th>
             <th className="py-2 px-4 border-b">Cryptocurrency</th>
             <th className="py-2 px-4 border-b">Amount</th>
             <th className="py-2 px-4 border-b">Status</th>
@@ -133,22 +169,30 @@ const BuyRequests: React.FC = () => {
         <tbody>
           {buyRequests.map((request) => (
             <tr key={request.id}>
-              <td className="py-2 px-4 border-b">{request.date.toLocaleString()}</td>
-              <td className="py-2 px-4 border-b">{request.userId}</td>
+              <td className="py-2 px-4 border-b">
+                {request.date.toLocaleString()}
+              </td>
+              <td className="py-2 px-4 border-b">
+                {request.fullName}
+               {/*  <br />
+                <span className="text-xs text-gray-500">{request.userId}</span> */}
+              </td>
               <td className="py-2 px-4 border-b">{request.cryptocurrency}</td>
-              <td className="py-2 px-4 border-b">${request.amount.toFixed(2)}</td>
+              <td className="py-2 px-4 border-b">
+                ${request.amount.toFixed(2)}
+              </td>
               <td className="py-2 px-4 border-b">{request.status}</td>
               <td className="py-2 px-4 border-b">
-                {request.status === 'pending' && (
+                {request.status === "pending" && (
                   <>
                     <button
-                      onClick={() => handleStatusChange(request.id, 'approved')}
+                      onClick={() => handleStatusChange(request.id, "approved")}
                       className="bg-green-500 text-white px-2 py-1 rounded mr-2"
                     >
                       Approve
                     </button>
                     <button
-                      onClick={() => handleStatusChange(request.id, 'rejected')}
+                      onClick={() => handleStatusChange(request.id, "rejected")}
                       className="bg-red-500 text-white px-2 py-1 rounded"
                     >
                       Reject
@@ -161,7 +205,7 @@ const BuyRequests: React.FC = () => {
         </tbody>
       </table>
     </div>
-  )
-}
+  );
+};
 
-export default BuyRequests
+export default BuyRequests;
