@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Coins, MapPin, Phone } from "lucide-react";
+import { Coins, MapPin, Phone, Mail } from "lucide-react";
 
 const Footer: React.FC = () => {
   return (
@@ -10,7 +10,7 @@ const Footer: React.FC = () => {
           <div>
             <div className="flex items-center mb-4">
               <Coins className="h-8 w-8 text-indigo-400" />
-              <span className="ml-2 text-xl font-bold">CryptoTracker Pro</span>
+              <span className="ml-2 text-xl font-bold">CryptoPingg</span>
             </div>
             <p className="text-gray-400 mb-4">
               Your all-in-one solution for cryptocurrency tracking and analysis.
@@ -48,6 +48,15 @@ const Footer: React.FC = () => {
               <li className="flex items-center">
                 <Phone size={16} className="mr-2 text-indigo-400" />
                 <span>Switzerland: +41799072418</span>
+              </li>
+              <li className="flex items-center">
+                <Mail size={16} className="mr-2 text-indigo-400" />
+                <a
+                  href="mailto:contact@cryptopingg.com"
+                  className="hover:text-indigo-300"
+                >
+                  contact@cryptopingg.com
+                </a>
               </li>
             </ul>
           </div>

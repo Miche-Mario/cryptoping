@@ -1,6 +1,6 @@
 import React from "react";
 import Navbar from "../landing/Navbar";
-import { AlertTriangle, Info } from "lucide-react";
+import { AlertTriangle, Info, Phone, Mail } from "lucide-react";
 
 const Disclaimer: React.FC = () => {
   return (
@@ -91,6 +91,40 @@ const Disclaimer: React.FC = () => {
             services.
           </p>
         </div>
+
+        <section className="mb-6">
+          <h2 className="text-2xl font-semibold mb-3">Contact Us</h2>
+          <p className="mb-4">
+            If you have any questions about this disclaimer, please contact us:
+          </p>
+          <ul className="space-y-2">
+            <li className="flex items-center">
+              <Phone size={16} className="mr-2 text-indigo-400" />
+              <span>Canada: +1 4314309069</span>
+            </li>
+            <li className="flex items-center">
+              <Phone size={16} className="mr-2 text-indigo-400" />
+              <span>UK: +447588674655</span>
+            </li>
+            <li className="flex items-center">
+              <Phone size={16} className="mr-2 text-indigo-400" />
+              <span>Netherlands: +3197010256219</span>
+            </li>
+            <li className="flex items-center">
+              <Phone size={16} className="mr-2 text-indigo-400" />
+              <span>Switzerland: +41799072418</span>
+            </li>
+            <li className="flex items-center">
+              <Mail size={16} className="mr-2 text-indigo-400" />
+              <a
+                href="mailto:contact@cryptopingg.com"
+                className="hover:text-indigo-600"
+              >
+                contact@cryptopingg.com
+              </a>
+            </li>
+          </ul>
+        </section>
 
         <p className="text-sm text-gray-600">
           Last Updated: {new Date().toLocaleDateString()}

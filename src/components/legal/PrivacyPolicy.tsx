@@ -1,4 +1,4 @@
-import { Phone } from "lucide-react";
+import { Phone, Mail } from "lucide-react";
 import React from "react";
 import Navbar from "../landing/Navbar";
 
@@ -104,6 +104,15 @@ const PrivacyPolicy: React.FC = () => {
             <li className="flex items-center">
               <Phone size={16} className="mr-2 text-indigo-400" />
               <span>Switzerland: +41799072418</span>
+            </li>
+            <li className="flex items-center">
+              <Mail size={16} className="mr-2 text-indigo-400" />
+              <a
+                href="mailto:contact@cryptopingg.com"
+                className="hover:text-indigo-600"
+              >
+                contact@cryptopingg.com
+              </a>
             </li>
           </ul>
         </div>

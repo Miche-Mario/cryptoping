@@ -1,6 +1,6 @@
 import React from "react";
 import Navbar from "../landing/Navbar";
-import { Phone } from "lucide-react";
+import { Phone, Mail } from "lucide-react";
 
 const TermsOfService: React.FC = () => {
   return (
@@ -77,7 +77,7 @@ const TermsOfService: React.FC = () => {
           for changes.
         </p>
 
-        <h2 className="text-2xl font-semibold mb-3">8 .Contact Us</h2>
+        <h2 className="text-2xl font-semibold mb-3">8. Contact Us</h2>
         <div>
           <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
           <ul className="space-y-2">
@@ -96,6 +96,15 @@ const TermsOfService: React.FC = () => {
             <li className="flex items-center">
               <Phone size={16} className="mr-2 text-indigo-400" />
               <span>Switzerland: +41799072418</span>
+            </li>
+            <li className="flex items-center">
+              <Mail size={16} className="mr-2 text-indigo-400" />
+              <a
+                href="mailto:contact@cryptopingg.com"
+                className="hover:text-indigo-600"
+              >
+                contact@cryptopingg.com
+              </a>
             </li>
           </ul>
         </div>
