@@ -193,7 +193,7 @@ const Wallet: React.FC = () => {
         <div className="bg-white shadow-md rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-4">Balance</h2>
           <div className="flex items-center">
-            <p className="text-3xl font-bold mr-2">
+            <p className="text-3xl font-bold mr-2 ">
               {showBalance ? `$${balance.toFixed(2)}` : "••••••"}
             </p>
             <button
@@ -210,7 +210,7 @@ const Wallet: React.FC = () => {
           <div className="flex flex-col items-center">
             <QRCodeSVG value={walletCode} size={120} />
             <div className="mt-4 text-lg font-medium break-all">
-              <p>{displayWalletCode()}</p>
+              <p className="lowercase">{displayWalletCode()}</p>
               <button
                 onClick={toggleShowFullWalletCode}
                 className="mt-2 flex items-center text-blue-600 hover:text-blue-800"

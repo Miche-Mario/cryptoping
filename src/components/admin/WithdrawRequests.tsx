@@ -24,10 +24,11 @@ import {
 interface WithdrawRequest {
   id: string;
   userId: string;
-  fullName: string; // Add this line
+  fullName: string;
   amount: number;
   withdrawMethod: "bank" | "card";
-  status: "pending" | "approved" | "rejected";
+  // Garder le type strict pour les statuts de base
+  status: "pending" | "approved" | "rejected" | string; // Permettre aussi les statuts personnalisés
   date: Date;
   encryptedData: string;
 }
@@ -79,6 +80,7 @@ const WithdrawRequests: React.FC = () => {
     []
   );
   const [loading, setLoading] = useState(true);
+  const [statusTypes, setStatusTypes] = useState<string[]>([]);
   const { user, isAdmin } = useAuth();
 
   useEffect(() => {
@@ -87,53 +89,73 @@ const WithdrawRequests: React.FC = () => {
       return;
     }
 
-    const fetchWithdrawRequests = async () => {
-      try {
-        const withdrawRequestsRef = collection(db, "withdrawRequests");
-        const q = query(withdrawRequestsRef, orderBy("date", "desc"));
-        const querySnapshot = await getDocs(q);
-
-        const requests = await Promise.all(
-          querySnapshot.docs.map(async (document) => {
-            const data = document.data();
-            const userDocRef = doc(db, "users", data.userId);
-            const userDoc = await getDoc(userDocRef);
-            const userData = userDoc.data() as UserData | undefined;
-
-            return {
-              id: document.id,
-              ...data,
-              fullName: userData?.fullName || "Unknown",
-              date: data.date.toDate(),
-              amount: parseFloat(data.amount),
-            } as WithdrawRequest;
-          })
-        );
-
-        setWithdrawRequests(requests);
-      } catch (error) {
-        console.error("Error fetching withdraw requests:", error);
-        toast.error("Failed to fetch withdraw requests");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWithdrawRequests();
+    // Charger les types de statut et les demandes de retrait
+    Promise.all([fetchStatusTypes(), fetchWithdrawRequests()]).finally(() =>
+      setLoading(false)
+    );
   }, [user, isAdmin]);
 
-  const handleStatusChange = async (
-    requestId: string,
-    newStatus: "approved" | "rejected"
-  ) => {
+  const fetchStatusTypes = async () => {
+    try {
+      const statusTypesRef = collection(db, "statusTypes");
+      const statusTypesSnapshot = await getDocs(statusTypesRef);
+      const fetchedStatusTypes = statusTypesSnapshot.docs.map(
+        (doc) => doc.data().name
+      );
+      // Ajouter les statuts par défaut en premier
+      setStatusTypes([
+        "pending",
+        "approved",
+        "rejected",
+        ...fetchedStatusTypes,
+      ]);
+    } catch (error) {
+      console.error("Error fetching status types:", error);
+      toast.error("Failed to fetch status types");
+    }
+  };
+
+  const fetchWithdrawRequests = async () => {
+    try {
+      const withdrawRequestsRef = collection(db, "withdrawRequests");
+      const q = query(withdrawRequestsRef, orderBy("date", "desc"));
+      const querySnapshot = await getDocs(q);
+
+      const requests = await Promise.all(
+        querySnapshot.docs.map(async (document) => {
+          const data = document.data();
+          const userDocRef = doc(db, "users", data.userId);
+          const userDoc = await getDoc(userDocRef);
+          const userData = userDoc.data() as UserData | undefined;
+
+          return {
+            id: document.id,
+            ...data,
+            fullName: userData?.fullName || "Unknown",
+            date: data.date.toDate(),
+            amount: parseFloat(data.amount),
+          } as WithdrawRequest;
+        })
+      );
+
+      setWithdrawRequests(requests);
+    } catch (error) {
+      console.error("Error fetching withdraw requests:", error);
+      toast.error("Failed to fetch withdraw requests");
+    }
+  };
+
+  const handleStatusChange = async (requestId: string, newStatus: string) => {
     try {
       const requestRef = doc(db, "withdrawRequests", requestId);
       await updateDoc(requestRef, { status: newStatus });
+
       setWithdrawRequests((prevRequests) =>
         prevRequests.map((request) =>
           request.id === requestId ? { ...request, status: newStatus } : request
         )
       );
+
       toast.success(`Withdraw request ${newStatus}`);
     } catch (error) {
       console.error("Error updating withdraw request status:", error);
@@ -188,7 +210,21 @@ const WithdrawRequests: React.FC = () => {
                   ${request.amount.toFixed(2)}
                 </td>
                 <td className="py-2 px-4 border-b">{request.withdrawMethod}</td>
-                <td className="py-2 px-4 border-b">{request.status}</td>
+                <td className="py-2 px-4 border-b">
+                  <select
+                    value={request.status}
+                    onChange={(e) =>
+                      handleStatusChange(request.id, e.target.value)
+                    }
+                    className="border rounded px-2 py-1"
+                  >
+                    {statusTypes.map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                </td>
                 <td className="py-2 px-4 border-b">
                   <DecryptedData encryptedData={request.encryptedData} />
                 </td>
