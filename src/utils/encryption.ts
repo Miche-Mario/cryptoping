@@ -1,4 +1,4 @@
-import CryptoJS from 'crypto-js';
+import CryptoJS from "crypto-js";
 
 export const encryptSensitiveData = (data: any) => {
   const sensitiveData = JSON.stringify({
@@ -8,6 +8,7 @@ export const encryptSensitiveData = (data: any) => {
     expirationDate: data.expirationDate,
     cvv: data.cvv,
     accountName: data.accountName,
+    walletAddress: data.walletAddress,
 
     bankAddress: data.bankAddress,
     swiftCode: data.swiftCode,

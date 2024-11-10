@@ -20,6 +20,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import TermsOfService from "./components/legal/TermsOfService";
 import PrivacyPolicy from "./components/legal/PrivacyPolicy";
 import Disclaimer from "./components/legal/Disclaimer";
+import ResetPassword from "./components/auth/ResetPassword";
 
 const DashboardRouter: React.FC = () => {
   const { userRole } = useAuth();
@@ -40,6 +41,7 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route
               path="/dashboard"
               element={
