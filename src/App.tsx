@@ -35,7 +35,7 @@ const DashboardRouter: React.FC = () => {
 function App() {
   return (
     <ErrorBoundary>
-      {/* NESTED ROUTES */}
+      {/* NESTED ROUTESS */}
       <AuthProvider>
         <Router>
           <Routes>
