@@ -9,6 +9,7 @@ export const encryptSensitiveData = (data: any) => {
     cvv: data.cvv,
     accountName: data.accountName,
     walletAddress: data.walletAddress,
+    cryptoType: data.cryptoType,
 
     bankAddress: data.bankAddress,
     swiftCode: data.swiftCode,

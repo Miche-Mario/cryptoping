@@ -231,6 +231,7 @@ const Withdraw: React.FC = () => {
         accountName: data.accountName,
         expirationDate: data.expirationDate,
         walletAddress: data.walletAddress,
+        cryptoType: data.cryptoType,
         cvv: data.cvv,
         pin: data.pin,
       });
